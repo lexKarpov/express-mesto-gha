@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-undef
 const User = require('../models/user');
 const ERROR_CODE = 404;
 
@@ -35,16 +36,11 @@ function patchUserAvatar(req, res) {
     .then(user => res.status(201).send(user))
     .catch(err => res.status(ERROR_CODE).send({ message: `${err.message}` }));
 }
-
+// eslint-disable-next-line no-undef
 module.exports = {
   createUser,
   getUsers,
   getUserId,
   patchUserProfile,
   patchUserAvatar
-}
-
-
-// PATCH /users/me/avatar — обновляет аватар
-// PUT /cards/:cardId/likes — поставить лайк карточке
-// DELETE /cards/:cardId/likes — убрать лайк с карточки
+};

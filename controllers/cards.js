@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-undef
 const Card = require('../models/card');
 const ERROR_CODE = 404;
 
@@ -47,6 +48,7 @@ function deletelikeCard(req, res) {
     .catch(err => res.status(ERROR_CODE).send({ message: `${err.message}` }));
 }
 
+// eslint-disable-next-line no-undef
 module.exports = {
   createCard,
   getCards,

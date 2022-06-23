@@ -1,6 +1,10 @@
+// eslint-disable-next-line no-undef
 const express = require('express');
+// eslint-disable-next-line no-undef
 const mongoose = require('mongoose');
+// eslint-disable-next-line no-undef
 const usersRoutes = require('./routes/users');
+// eslint-disable-next-line no-undef
 const cardsRoutes = require('./routes/cards');
 
 const app = express();
@@ -21,6 +25,6 @@ app.use('/users', usersRoutes);
 app.use('/cards', cardsRoutes);
 
 
-app.listen(PORT, _ => {
+app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
 });

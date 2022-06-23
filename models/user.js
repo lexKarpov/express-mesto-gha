@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-undef
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
@@ -19,5 +20,5 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-
+// eslint-disable-next-line no-undef
 module.exports = mongoose.model('user', userSchema);

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-undef
 const mongoose = require('mongoose');
 
 const cardSchema = new mongoose.Schema({
@@ -27,5 +28,5 @@ const cardSchema = new mongoose.Schema({
     default: Date.now
   }
 });
-
+// eslint-disable-next-line no-undef
 module.exports = mongoose.model('card', cardSchema);
