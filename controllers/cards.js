@@ -1,34 +1,40 @@
 const Card = require('../models/card');
+const ERROR_CODE = 404;
 
 function createCard(req, res) {
   const { name, link, likes, createdAt } = req.body;
   const owner = req.user._id
   Card.create({ name, link, owner, likes, createdAt })
-    .then(card => res.send({ data: card }))
-    .catch(err => res.status(400).send({ message: `${err.message}` }));
+    .then(card => res.status(201).send({ data: card }))
+    .catch(err => res.status(ERROR_CODE).send({ message: `${err.message}` }));
 }
-
 
 function getCards(req, res) {
   Card.find({})
-    .then(cards => res.send(cards))
-    .catch(err => res.status(400).send({ message: `${err.message}` }));
+    .then(cards => res.status(201).send(cards))
+    .catch(err => res.status(ERROR_CODE).send({ message: `${err.message}` }));
 }
 
 function deleteCard(req, res) {
   Card.findByIdAndRemove(req.params.cardId)
-    .then(user => res.send({ data: user }))
-    .catch(err => res.status(500).send({ message: `${err.message}` }));
+    .then(user => res.status(201).send({ data: user }))
+    .catch(err => res.status(ERROR_CODE).send({ message: `${err.message}` }));
 }
 
-function patchUserAvatar(req, res) {
+function postlikeCard(req, res) {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then(user => res.send(user))
-    .catch(err => res.status(500).send({ message: `${err.message}` }));
+    .then(card => {
+      if (!card) {
+        res.status(ERROR_CODE).send({ message: 'Не найден id' });
+        return;
+      }
+    })
+    .then(user => res.status(201).send(user))
+    .catch(err => res.status(ERROR_CODE).send({ message: `${err.message}` }));
 }
 
 function deletelikeCard(req, res) {
@@ -37,14 +43,15 @@ function deletelikeCard(req, res) {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then(user => res.send(user))
-    .catch(err => res.status(500).send({ message: `${err.message}` }));
+    .then(user => res.status(201).send(user))
+    .catch(err => res.status(ERROR_CODE).send({ message: `${err.message}` }));
 }
 
 module.exports = {
   createCard,
   getCards,
   deleteCard,
-  patchUserAvatar,
+  postlikeCard,
   deletelikeCard
 }
+
