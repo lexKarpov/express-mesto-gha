@@ -1,5 +1,8 @@
 const Card = require('../models/card');
-const ERROR_CODE = require('../constants/constants');
+const {
+  ERROR_CODE_400,
+  ERROR_CODE_500,
+} = require('../constants/constants');
 
 function createCard(req, res, next) {
   const {
@@ -17,11 +20,11 @@ function createCard(req, res, next) {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE;
+        error.statusCode = ERROR_CODE_400;
         next(error);
       } else {
         const error = new Error('Что-то пошло не так');
-        error.statusCode = 500;
+        error.statusCode = ERROR_CODE_500;
         next(error);
       }
     });
@@ -34,28 +37,34 @@ function getCards(req, res, next) {
         .status(200)
         .send(cards);
     })
-    .catch((err) => {
+    .catch(() => {
       const error = new Error('Что-то пошло не так');
-      error.statusCode = 500;
+      error.statusCode = ERROR_CODE_500;
       next(error);
     });
 }
 
 function deleteCard(req, res, next) {
   Card.findByIdAndRemove(req.params.cardId)
-    .then((user) => {
+    .then((card) => {
+      if (!card) {
+        const error = new Error('Карточка с таким id не найдена.');
+        error.statusCode = ERROR_CODE_400;
+        next(error);
+        return;
+      }
       res
         .status(200)
-        .send({ data: user });
+        .send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
         const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE;
+        error.statusCode = ERROR_CODE_400;
         next(error);
       } else {
         const error = new Error('Что-то пошло не так');
-        error.statusCode = 500;
+        error.statusCode = ERROR_CODE_500;
         next(error);
       }
     });
@@ -67,19 +76,25 @@ function postlikeCard(req, res, next) {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then((user) => {
+    .then((card) => {
+      if (!card) {
+        const error = new Error('Карточка с таким id не найдена.');
+        error.statusCode = ERROR_CODE_400;
+        next(error);
+        return;
+      }
       res
         .status(200)
-        .send(user);
+        .send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
         const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE;
+        error.statusCode = ERROR_CODE_400;
         next(error);
       } else {
         const error = new Error('Что-то пошло не так');
-        error.statusCode = 500;
+        error.statusCode = ERROR_CODE_500;
         next(error);
       }
     });
@@ -91,15 +106,25 @@ function deletelikeCard(req, res, next) {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then((user) => res.status(200).send(user))
+    .then((card) => {
+      if (!card) {
+        const error = new Error('Карточка с таким id не найдена.');
+        error.statusCode = ERROR_CODE_400;
+        next(error);
+        return;
+      }
+      res
+        .status(200)
+        .send(card);
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
         const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE;
+        error.statusCode = ERROR_CODE_400;
         next(error);
       } else {
         const error = new Error('Что-то пошло не так');
-        error.statusCode = 500;
+        error.statusCode = ERROR_CODE_500;
         next(error);
       }
     });
