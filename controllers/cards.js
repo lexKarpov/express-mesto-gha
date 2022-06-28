@@ -2,6 +2,7 @@ const Card = require('../models/card');
 const {
   ERROR_CODE_400,
   ERROR_CODE_500,
+  ERROR_CODE_404,
 } = require('../constants/constants');
 
 function createCard(req, res, next) {
@@ -49,7 +50,7 @@ function deleteCard(req, res, next) {
     .then((card) => {
       if (!card) {
         const error = new Error('Карточка с таким id не найдена.');
-        error.statusCode = ERROR_CODE_400;
+        error.statusCode = ERROR_CODE_404;
         next(error);
         return;
       }
@@ -79,7 +80,7 @@ function postlikeCard(req, res, next) {
     .then((card) => {
       if (!card) {
         const error = new Error('Карточка с таким id не найдена.');
-        error.statusCode = ERROR_CODE_400;
+        error.statusCode = ERROR_CODE_404;
         next(error);
         return;
       }
@@ -109,7 +110,7 @@ function deletelikeCard(req, res, next) {
     .then((card) => {
       if (!card) {
         const error = new Error('Карточка с таким id не найдена.');
-        error.statusCode = ERROR_CODE_400;
+        error.statusCode = ERROR_CODE_404;
         next(error);
         return;
       }

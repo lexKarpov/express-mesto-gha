@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const usersRoutes = require('./routes/users');
 const cardsRoutes = require('./routes/cards');
-
+const { ERROR_CODE_404 } = require('./constants/constants')
 const app = express();
 const PORT = 3000;
 
@@ -18,17 +18,16 @@ app.use((req, res, next) => {
 
 app.use('/users', usersRoutes);
 app.use('/cards', cardsRoutes);
+app.use((req, res, next) => {
+  res
+    .status(ERROR_CODE_404)
+    .send('Некорректные данные');
+  next();
+});
 app.use((err, req, res, next) => {
   res
     .status(err.statusCode)
     .send({ message: err.message });
-  next();
-});
-
-app.use((req, res, next) => {
-  res
-    .status(404)
-    .send('Некорректные данные');
   next();
 });
 

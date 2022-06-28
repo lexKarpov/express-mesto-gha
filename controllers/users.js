@@ -2,6 +2,7 @@ const User = require('../models/user');
 const {
   ERROR_CODE_400,
   ERROR_CODE_500,
+  ERROR_CODE_404,
 } = require('../constants/constants');
 
 function createUser(req, res, next) {
@@ -44,7 +45,7 @@ function getUserId(req, res, next) {
     .then((user) => {
       if (!user) {
         const error = new Error('Пользователя с таким id не существует.');
-        error.statusCode = 404;
+        error.statusCode = ERROR_CODE_404;
         next(error);
         return;
       }
@@ -71,7 +72,7 @@ function patchUserProfile(req, res, next) {
     .then((user) => {
       if (!user) {
         const error = new Error('Пользователя с таким id не существует.');
-        error.statusCode = 404;
+        error.statusCode = ERROR_CODE_404;
         next(error);
         return;
       }
@@ -98,7 +99,7 @@ function patchUserAvatar(req, res, next) {
     .then((user) => {
       if (!user) {
         const error = new Error('Пользователь с таким id не найден.');
-        error.statusCode = 404;
+        error.statusCode = ERROR_CODE_404;
         next(error);
         return;
       }
@@ -107,7 +108,7 @@ function patchUserAvatar(req, res, next) {
         .send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         const error = new Error('Некорректные данные.');
         error.statusCode = ERROR_CODE_400;
         next(error);
