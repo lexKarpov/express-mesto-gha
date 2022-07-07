@@ -1,16 +1,22 @@
+// eslint-disable-next-line import/no-unresolved
+const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const {
   ERROR_CODE_400,
   ERROR_CODE_500,
   ERROR_CODE_404,
+  ERROR_CODE_403,
+  RES_CREATED,
+  RES_OK,
 } = require('../constants/constants');
+const SALT_ROUNDS = 10;
+const { generateToken } = require('../helpers/jwt');
 
-function createUser(req, res, next) {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
+function getUserProfile(req, res, next) {
+  User.findById(req.user._id)
     .then((user) => {
       res
-        .status(201)
+        .status(RES_CREATED)
         .send({ data: user });
     })
     .catch((err) => {
@@ -26,11 +32,88 @@ function createUser(req, res, next) {
     });
 }
 
+function login(req, res, next) {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    const error = new Error('Не передан емейл или пароль');
+    error.statusCode = ERROR_CODE_400;
+    next(error);
+  }
+  User.findOne({ email })
+    .select('+password')
+    .then((user) => {
+      if (!user) {
+        const error = new Error('Неправильный емейл или пароль');
+        error.statusCode = ERROR_CODE_403;
+        next(error);
+      }
+      return Promise.all([
+        user,
+        bcrypt.compare(password, user.password),
+      ]);
+    })
+    .then(([user, isPasswordCorrect]) => {
+      if (!isPasswordCorrect) {
+        const error = new Error('Неправильный емейл или пароль');
+        error.statusCode = ERROR_CODE_403;
+        next(error);
+      }
+
+      return generateToken({ email: user.email, type: 'admin' });
+    })
+    .then((token) => {
+      res.send({ token });
+    });
+}
+
+function createUser(req, res, next) {
+  const {
+    name,
+    about,
+    avatar,
+    email,
+    password } = req.body;
+  bcrypt.hash(req.body.password, SALT_ROUNDS)
+    .then((hash) => {
+      User.create({
+        name,
+        about,
+        avatar,
+        email,
+        password: hash,
+      })
+        .then((user) => {
+          res
+            .status(RES_CREATED)
+            .send({ data: user });
+        });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        const error = new Error('Некорректные данные.');
+        error.statusCode = ERROR_CODE_400;
+        next(error);
+      } else if (err.code === 11000) {
+        const error = new Error('Емейл занят');
+        error.statusCode = 409;
+        next(error);
+      } else if (err.message === 'Некорректный email') {
+        const error = new Error('Некорректный email');
+        error.statusCode = ERROR_CODE_403;
+        next(error);
+      } else {
+        const error = new Error('Что-то пошло не так');
+        error.statusCode = ERROR_CODE_500;
+        next(error);
+      }
+    });
+}
+
 function getUsers(req, res, next) {
   User.find({})
     .then((users) => {
       res
-        .status(200)
+        .status(RES_OK)
         .send(users);
     })
     .catch(() => {
@@ -50,7 +133,7 @@ function getUserId(req, res, next) {
         return;
       }
       res
-        .status(200)
+        .status(RES_OK)
         .send(user);
     })
     .catch((err) => {
@@ -77,7 +160,7 @@ function patchUserProfile(req, res, next) {
         return;
       }
       res
-        .status(200)
+        .status(RES_OK)
         .send(user);
     })
     .catch((err) => {
@@ -104,7 +187,7 @@ function patchUserAvatar(req, res, next) {
         return;
       }
       res
-        .status(200)
+        .status(RES_OK)
         .send(user);
     })
     .catch((err) => {
@@ -126,4 +209,6 @@ module.exports = {
   getUserId,
   patchUserProfile,
   patchUserAvatar,
+  login,
+  getUserProfile,
 };

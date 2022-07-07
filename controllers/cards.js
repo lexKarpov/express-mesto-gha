@@ -7,11 +7,16 @@ const {
 
 function createCard(req, res, next) {
   const {
-    name, link, likes,
+    name,
+    link,
+    likes,
   } = req.body;
-  const owner = req.user._id;
+  const owner = req.user.id;
   Card.create({
-    name, link, owner, likes,
+    name,
+    link,
+    owner,
+    likes,
   })
     .then((card) => {
       res
@@ -46,10 +51,17 @@ function getCards(req, res, next) {
 }
 
 function deleteCard(req, res, next) {
+  console.log(req.user.id)
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card) {
         const error = new Error('Карточка с таким id не найдена.');
+        error.statusCode = ERROR_CODE_404;
+        next(error);
+        return;
+      }
+      if (card.owner.toString() !== req.user.id.toString()) {
+        const error = new Error('Нельзя удалить эту карточку');
         error.statusCode = ERROR_CODE_404;
         next(error);
         return;
