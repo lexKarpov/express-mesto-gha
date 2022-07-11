@@ -61,10 +61,9 @@ app.use('/users', isAuthorized, usersRoutes);
 app.use('/cards', isAuthorized, cardsRoutes);
 
 app.use((req, res, next) => {
-  res
-    .status(ERROR_CODE_404)
-    .send('Некорректные данные');
-  next();
+  const error = new Error('Данный Некорректные уже занят.');
+  error.statusCode = ERROR_CODE_404;
+  next(error);
 });
 app.use(errors());
 app.use((err, req, res, next) => {
