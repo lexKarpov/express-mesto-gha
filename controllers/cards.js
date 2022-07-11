@@ -51,7 +51,7 @@ function getCards(req, res, next) {
 }
 
 function deleteCard(req, res, next) {
-  console.log(req.user.id)
+  console.log(req.user.id);
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card) {

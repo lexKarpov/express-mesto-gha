@@ -9,11 +9,12 @@ const {
   RES_CREATED,
   RES_OK,
 } = require('../constants/constants');
+
 const SALT_ROUNDS = 10;
 const { generateToken } = require('../helpers/jwt');
 
 function getUserProfile(req, res, next) {
-  User.findById(req.user._id)
+  User.findById(req.user.id)
     .then((user) => {
       res
         .status(RES_CREATED)
@@ -72,34 +73,39 @@ function createUser(req, res, next) {
     about,
     avatar,
     email,
-    password } = req.body;
-  bcrypt.hash(req.body.password, SALT_ROUNDS)
-    .then((hash) => {
-      User.create({
-        name,
-        about,
-        avatar,
-        email,
-        password: hash,
-      })
-        .then((user) => {
-          res
-            .status(RES_CREATED)
-            .send({ data: user });
-        });
+    password,
+  } = req.body;
+  bcrypt
+    .hash(password, SALT_ROUNDS)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
+    .then((user) => res.status(201).send({
+      data: user,
+    }))
+    .catch((err) => {
+      if (err.code === 11000) {
+        const error = new Error('Данный email уже занят.');
+        error.statusCode = ERROR_CODE_404;
+        next(error);
+      } else if (err.name === 'ValidationError') {
+        const error = new Error('Некорректные данные.');
+        error.statusCode = ERROR_CODE_400;
+        next(error);
+      } else {
+        const error = new Error('Что-то пошло не так');
+        error.statusCode = ERROR_CODE_500;
+        next(error);
+      }
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         const error = new Error('Некорректные данные.');
         error.statusCode = ERROR_CODE_400;
-        next(error);
-      } else if (err.code === 11000) {
-        const error = new Error('Емейл занят');
-        error.statusCode = 409;
-        next(error);
-      } else if (err.message === 'Некорректный email') {
-        const error = new Error('Некорректный email');
-        error.statusCode = ERROR_CODE_403;
         next(error);
       } else {
         const error = new Error('Что-то пошло не так');
@@ -137,6 +143,7 @@ function getUserId(req, res, next) {
         .send(user);
     })
     .catch((err) => {
+      console.log(err);
       if (err.name === 'CastError') {
         const error = new Error('Некорректный id.');
         error.statusCode = ERROR_CODE_400;
@@ -151,7 +158,7 @@ function getUserId(req, res, next) {
 
 function patchUserProfile(req, res, next) {
   const { name, about } = req.body;
-  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(req.user.id, { name, about }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         const error = new Error('Пользователя с таким id не существует.');
@@ -178,7 +185,7 @@ function patchUserProfile(req, res, next) {
 
 function patchUserAvatar(req, res, next) {
   const { avatar } = req.body;
-  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(req.user.id, { avatar }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         const error = new Error('Пользователь с таким id не найден.');

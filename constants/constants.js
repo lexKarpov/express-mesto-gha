@@ -5,7 +5,7 @@ const ERROR_CODE_403 = 403;
 const ERROR_CODE_401 = 401;
 const RES_OK = 200;
 const RES_CREATED = 201;
-const regExp = /(https?):\/\/(www.)?[a-z0-9-]+\.[a-z]+[a-z0-9/\-._~:?#[\]@!$&='()*+,;]+#?/i;
+const regExpAvatar = /^((http[s]?|ftp):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?$/;
 
 module.exports = {
   ERROR_CODE_400,
@@ -15,5 +15,5 @@ module.exports = {
   ERROR_CODE_401,
   RES_CREATED,
   RES_OK,
-  regExp,
+  regExpAvatar,
 };
