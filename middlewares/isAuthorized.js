@@ -1,16 +1,13 @@
 const { checkToken } = require('../helpers/jwt');
 const User = require('../models/user');
-const {
-  ERROR_CODE_500,
-  ERROR_CODE_401,
-} = require('../constants/constants');
+
+const InternalServer = require('../errors/Error500');
+const Unauthorized = require('../errors/Error401');
 
 function isAuthorized(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth) {
-    const error = new Error('Некорректные данные');
-    error.statusCode = ERROR_CODE_401;
-    next(error);
+    next(new Unauthorized('Авторизуйтесь для доступа'));
   }
 
   const token = auth.replace('Bearer ', '');
@@ -20,17 +17,13 @@ function isAuthorized(req, res, next) {
     User.findOne({ email: payload.email })
       .then((user) => {
         if (!user) {
-          const error = new Error('Что-то пошло не так');
-          error.statusCode = ERROR_CODE_500;
-          next(error);
+          next(new InternalServer('Что-то пошло не так'));
         }
         req.user = { id: user._id };
         next();
       });
   } catch (err) {
-    const error = new Error('Авторизуйтесь для доступа');
-    error.statusCode = ERROR_CODE_401;
-    next(error);
+    next(new Unauthorized('Авторизуйтесь для доступа'));
   }
 }
 

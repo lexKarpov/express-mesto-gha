@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { isEmail } = require('validator');
-const { regExpAvatar } = require('../constants/constants');
+const { regExpURL } = require('../constants/constants');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
-    match: [regExpAvatar, 'Введите корректный URL'],
+    match: [regExpURL, 'Введите корректный URL'],
   },
   email: {
     type: String,

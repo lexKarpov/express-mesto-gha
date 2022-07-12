@@ -2,16 +2,17 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const {
-  ERROR_CODE_400,
-  ERROR_CODE_500,
-  ERROR_CODE_404,
-  ERROR_CODE_403,
   RES_CREATED,
   RES_OK,
+  ERROR_DUPLICATE,
 } = require('../constants/constants');
 
 const SALT_ROUNDS = 10;
 const { generateToken } = require('../helpers/jwt');
+const Badreq = require('../errors/Error400');
+const InternalServer = require('../errors/Error500');
+const Forbidden = require('../errors/Error403');
+const NotFound = require('../errors/Error404');
 
 function getUserProfile(req, res, next) {
   User.findById(req.user.id)
@@ -22,13 +23,9 @@ function getUserProfile(req, res, next) {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE_400;
-        next(error);
+        next(new Badreq('Некорректные данные.'));
       } else {
-        const error = new Error('Что-то пошло не так');
-        error.statusCode = ERROR_CODE_500;
-        next(error);
+        next(new InternalServer('Что-то пошло не так'));
       }
     });
 }
@@ -36,17 +33,13 @@ function getUserProfile(req, res, next) {
 function login(req, res, next) {
   const { email, password } = req.body;
   if (!email || !password) {
-    const error = new Error('Не передан емейл или пароль');
-    error.statusCode = ERROR_CODE_400;
-    next(error);
+    next(new Badreq('Не передан емейл или пароль'));
   }
   User.findOne({ email })
     .select('+password')
     .then((user) => {
       if (!user) {
-        const error = new Error('Неправильный емейл или пароль');
-        error.statusCode = ERROR_CODE_403;
-        next(error);
+        next(new Forbidden('Неправильный емейл или пароль'));
       }
       return Promise.all([
         user,
@@ -55,9 +48,7 @@ function login(req, res, next) {
     })
     .then(([user, isPasswordCorrect]) => {
       if (!isPasswordCorrect) {
-        const error = new Error('Неправильный емейл или пароль');
-        error.statusCode = ERROR_CODE_403;
-        next(error);
+        next(new Forbidden('Неправильный емейл или пароль'));
       }
 
       return generateToken({ email: user.email, type: 'admin' });
@@ -88,29 +79,19 @@ function createUser(req, res, next) {
       data: user,
     }))
     .catch((err) => {
-      if (err.code === 11000) {
-        const error = new Error('Данный email уже занят.');
-        error.statusCode = ERROR_CODE_404;
-        next(error);
-      } else if (err.name === 'ValidationError') {
-        const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE_400;
-        next(error);
+      if (err.code === ERROR_DUPLICATE) {
+        next(new NotFound('Данный email уже занят'));
+      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(new Badreq('Некорректные данные'));
       } else {
-        const error = new Error('Что-то пошло не так');
-        error.statusCode = ERROR_CODE_500;
-        next(error);
+        next(new InternalServer('Что-то пошло не так'));
       }
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE_400;
-        next(error);
+        next(new Badreq('Некорректные данные'));
       } else {
-        const error = new Error('Что-то пошло не так');
-        error.statusCode = ERROR_CODE_500;
-        next(error);
+        next(new InternalServer('Что-то пошло не так'));
       }
     });
 }
@@ -123,9 +104,7 @@ function getUsers(req, res, next) {
         .send(users);
     })
     .catch(() => {
-      const error = new Error({ message: 'Что-то пошло не так' });
-      error.statusCode = ERROR_CODE_500;
-      next(error);
+      next(new InternalServer('Что-то пошло не так'));
     });
 }
 
@@ -133,9 +112,7 @@ function getUserId(req, res, next) {
   User.findOne({ _id: req.params.userId })
     .then((user) => {
       if (!user) {
-        const error = new Error('Пользователя с таким id не существует.');
-        error.statusCode = ERROR_CODE_404;
-        next(error);
+        next(new NotFound('Пользователя с таким id не найден'));
         return;
       }
       res
@@ -145,13 +122,9 @@ function getUserId(req, res, next) {
     .catch((err) => {
       console.log(err);
       if (err.name === 'CastError') {
-        const error = new Error('Некорректный id.');
-        error.statusCode = ERROR_CODE_400;
-        next(error);
+        next(new Badreq('Некорректный id'));
       } else {
-        const error = new Error('Что-то пошло не так.');
-        error.statusCode = ERROR_CODE_500;
-        next(error);
+        next(new InternalServer('Что-то пошло не так'));
       }
     });
 }
@@ -161,9 +134,7 @@ function patchUserProfile(req, res, next) {
   User.findByIdAndUpdate(req.user.id, { name, about }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
-        const error = new Error('Пользователя с таким id не существует.');
-        error.statusCode = ERROR_CODE_404;
-        next(error);
+        next(new NotFound('Пользователь с таким id не найден'));
         return;
       }
       res
@@ -172,13 +143,9 @@ function patchUserProfile(req, res, next) {
     })
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE_400;
-        next(error);
+        next(new Badreq('Некорректные данные'));
       } else {
-        const error = new Error('Что-то пошло не так.');
-        error.statusCode = ERROR_CODE_500;
-        next(error);
+        next(new InternalServer('Что-то пошло не так'));
       }
     });
 }
@@ -188,9 +155,7 @@ function patchUserAvatar(req, res, next) {
   User.findByIdAndUpdate(req.user.id, { avatar }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
-        const error = new Error('Пользователь с таким id не найден.');
-        error.statusCode = ERROR_CODE_404;
-        next(error);
+        next(new NotFound('Пользователь с таким id не найден'));
         return;
       }
       res
@@ -199,13 +164,9 @@ function patchUserAvatar(req, res, next) {
     })
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE_400;
-        next(error);
+        next(new Badreq('Некорректные данные'));
       } else {
-        const error = new Error('Что-то пошло не так.');
-        error.statusCode = ERROR_CODE_500;
-        next(error);
+        next(new InternalServer('Что-то пошло не так'));
       }
     });
 }

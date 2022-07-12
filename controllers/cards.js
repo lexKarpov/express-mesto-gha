@@ -1,9 +1,8 @@
 const Card = require('../models/card');
-const {
-  ERROR_CODE_400,
-  ERROR_CODE_500,
-  ERROR_CODE_404,
-} = require('../constants/constants');
+const Badreq = require('../errors/Error400');
+const InternalServer = require('../errors/Error500');
+const Forbidden = require('../errors/Error403');
+const NotFound = require('../errors/Error404');
 
 function createCard(req, res, next) {
   const {
@@ -25,13 +24,9 @@ function createCard(req, res, next) {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE_400;
-        next(error);
+        next(new Badreq('Некорректные данные'));
       } else {
-        const error = new Error('Что-то пошло не так');
-        error.statusCode = ERROR_CODE_500;
-        next(error);
+        next(new InternalServer('Что-то пошло не так'));
       }
     });
 }
@@ -44,9 +39,7 @@ function getCards(req, res, next) {
         .send(cards);
     })
     .catch(() => {
-      const error = new Error('Что-то пошло не так');
-      error.statusCode = ERROR_CODE_500;
-      next(error);
+      next(new InternalServer('Что-то пошло не так'));
     });
 }
 
@@ -55,15 +48,11 @@ function deleteCard(req, res, next) {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card) {
-        const error = new Error('Карточка с таким id не найдена.');
-        error.statusCode = ERROR_CODE_404;
-        next(error);
+        next(new NotFound('Карточка с таким id не найдена'));
         return;
       }
       if (card.owner.toString() !== req.user.id.toString()) {
-        const error = new Error('Нельзя удалить эту карточку');
-        error.statusCode = ERROR_CODE_404;
-        next(error);
+        next(new Forbidden('Нельзя удалить эту карточку'));
         return;
       }
       res
@@ -72,13 +61,9 @@ function deleteCard(req, res, next) {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE_400;
-        next(error);
+        next(new Badreq('Некорректные данные'));
       } else {
-        const error = new Error('Что-то пошло не так');
-        error.statusCode = ERROR_CODE_500;
-        next(error);
+        next(new InternalServer('Что-то пошло не так'));
       }
     });
 }
@@ -91,9 +76,7 @@ function postlikeCard(req, res, next) {
   )
     .then((card) => {
       if (!card) {
-        const error = new Error('Карточка с таким id не найдена.');
-        error.statusCode = ERROR_CODE_404;
-        next(error);
+        next(new NotFound('Карточка с таким id не найдена'));
         return;
       }
       res
@@ -102,13 +85,9 @@ function postlikeCard(req, res, next) {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE_400;
-        next(error);
+        next(new Badreq('Некорректные данные'));
       } else {
-        const error = new Error('Что-то пошло не так');
-        error.statusCode = ERROR_CODE_500;
-        next(error);
+        next(new InternalServer('Что-то пошло не так'));
       }
     });
 }
@@ -121,9 +100,7 @@ function deletelikeCard(req, res, next) {
   )
     .then((card) => {
       if (!card) {
-        const error = new Error('Карточка с таким id не найдена.');
-        error.statusCode = ERROR_CODE_404;
-        next(error);
+        next(new NotFound('Карточка с таким id не найдена'));
         return;
       }
       res
@@ -132,13 +109,9 @@ function deletelikeCard(req, res, next) {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        const error = new Error('Некорректные данные.');
-        error.statusCode = ERROR_CODE_400;
-        next(error);
+        next(new Badreq('Некорректные данные'));
       } else {
-        const error = new Error('Что-то пошло не так');
-        error.statusCode = ERROR_CODE_500;
-        next(error);
+        next(new InternalServer('Что-то пошло не так'));
       }
     });
 }

@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
-const { regExpAvatar } = require('../constants/constants');
+const { regExpURL } = require('../constants/constants');
 const {
   createCard,
   getCards,
@@ -19,7 +19,7 @@ router.post('/', celebrate({
     link: Joi
       .string()
       .required()
-      .pattern(new RegExp(regExpAvatar)),
+      .pattern(new RegExp(regExpURL)),
   }),
 }), createCard);
 

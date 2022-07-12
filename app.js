@@ -6,10 +6,11 @@ const { errors } = require('celebrate');
 const { celebrate, Joi } = require('celebrate');
 const usersRoutes = require('./routes/users');
 const cardsRoutes = require('./routes/cards');
-const { ERROR_CODE_404 } = require('./constants/constants');
 const { login, createUser } = require('./controllers/users');
 const { isAuthorized } = require('./middlewares/isAuthorized');
-const { regExpAvatar } = require('./constants/constants');
+const { regExpURL } = require('./constants/constants');
+
+const NotFound = require('./errors/Error404');
 
 const app = express();
 const PORT = 3000;
@@ -45,7 +46,7 @@ app.post('/signup', celebrate({
       .max(30),
     avatar: Joi
       .string()
-      .pattern(new RegExp(regExpAvatar)),
+      .pattern(new RegExp(regExpURL)),
     email: Joi
       .string()
       .required()
@@ -61,12 +62,13 @@ app.use('/users', isAuthorized, usersRoutes);
 app.use('/cards', isAuthorized, cardsRoutes);
 
 app.use((req, res, next) => {
-  const error = new Error('Данный Некорректные уже занят.');
-  error.statusCode = ERROR_CODE_404;
-  next(error);
+  next(new NotFound('Страница не найдена'));
 });
+
 app.use(errors());
+
 app.use((err, req, res, next) => {
+  console.log(err);
   res
     .status(err.statusCode)
     .send({ message: err.message });
