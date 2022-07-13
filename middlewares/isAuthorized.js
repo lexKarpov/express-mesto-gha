@@ -8,6 +8,7 @@ function isAuthorized(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth) {
     next(new Unauthorized('Авторизуйтесь для доступа'));
+    return;
   }
 
   const token = auth.replace('Bearer ', '');
@@ -23,7 +24,7 @@ function isAuthorized(req, res, next) {
         next();
       });
   } catch (err) {
-    next(new Unauthorized('Авторизуйтесь для доступа'));
+    next(err);
   }
 }
 

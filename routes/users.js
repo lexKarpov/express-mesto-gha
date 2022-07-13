@@ -17,6 +17,7 @@ router.get('/:userId', celebrate({
     .keys({
       userId: Joi
         .string()
+        .hex()
         .required(),
     }),
 }), getUserId);
@@ -33,6 +34,7 @@ router.patch('/me', celebrate({
       about: Joi
         .string()
         .required()
+        .max(30)
         .min(2),
     }),
 }), patchUserProfile);

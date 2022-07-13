@@ -25,7 +25,8 @@ function getUserProfile(req, res, next) {
       if (err.name === 'ValidationError') {
         next(new Badreq('Некорректные данные.'));
       } else {
-        next(new InternalServer('Что-то пошло не так'));
+        // next(new InternalServer('Что-то пошло не так'));
+        next(err);
       }
     });
 }
@@ -40,18 +41,21 @@ function login(req, res, next) {
     .then((user) => {
       if (!user) {
         next(new Forbidden('Неправильный емейл или пароль'));
+      } else {
+        return Promise.all([
+          user,
+          bcrypt.compare(password, user.password),
+        ]);
       }
-      return Promise.all([
-        user,
-        bcrypt.compare(password, user.password),
-      ]);
+      return '';
     })
     .then(([user, isPasswordCorrect]) => {
       if (!isPasswordCorrect) {
         next(new Forbidden('Неправильный емейл или пароль'));
+      } else {
+        return generateToken({ email: user.email, type: 'admin' });
       }
-
-      return generateToken({ email: user.email, type: 'admin' });
+      return '';
     })
     .then((token) => {
       res.send({ token });
@@ -84,14 +88,16 @@ function createUser(req, res, next) {
       } else if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new Badreq('Некорректные данные'));
       } else {
-        next(new InternalServer('Что-то пошло не так'));
+        // next(new InternalServer('Что-то пошло не так'));
+        next(err);
       }
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new Badreq('Некорректные данные'));
       } else {
-        next(new InternalServer('Что-то пошло не так'));
+        // next(new InternalServer('Что-то пошло не так'));
+        next(err);
       }
     });
 }
@@ -103,9 +109,7 @@ function getUsers(req, res, next) {
         .status(RES_OK)
         .send(users);
     })
-    .catch(() => {
-      next(new InternalServer('Что-то пошло не так'));
-    });
+    .catch(next);
 }
 
 function getUserId(req, res, next) {
@@ -120,11 +124,10 @@ function getUserId(req, res, next) {
         .send(user);
     })
     .catch((err) => {
-      console.log(err);
       if (err.name === 'CastError') {
         next(new Badreq('Некорректный id'));
       } else {
-        next(new InternalServer('Что-то пошло не так'));
+        next(err);
       }
     });
 }
@@ -145,7 +148,7 @@ function patchUserProfile(req, res, next) {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new Badreq('Некорректные данные'));
       } else {
-        next(new InternalServer('Что-то пошло не так'));
+        next(err);
       }
     });
 }

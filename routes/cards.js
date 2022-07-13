@@ -31,6 +31,7 @@ router.delete('/:cardId', celebrate({
     .keys({
       cardId: Joi
         .string()
+        .hex()
         .required(),
     }),
 }), deleteCard);
@@ -41,6 +42,7 @@ router.put('/:cardId/likes', celebrate({
     .keys({
       cardId: Joi
         .string()
+        .hex()
         .required(),
     }),
 }), postlikeCard);
@@ -51,6 +53,7 @@ router.delete('/:cardId/likes', celebrate({
     .keys({
       cardId: Joi
         .string()
+        .hex()
         .required(),
     }),
 }), deletelikeCard);

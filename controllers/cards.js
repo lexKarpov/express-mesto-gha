@@ -44,8 +44,7 @@ function getCards(req, res, next) {
 }
 
 function deleteCard(req, res, next) {
-  console.log(req.user.id);
-  Card.findByIdAndRemove(req.params.cardId)
+  Card.findById(req.params.cardId)
     .then((card) => {
       if (!card) {
         next(new NotFound('Карточка с таким id не найдена'));
@@ -55,6 +54,7 @@ function deleteCard(req, res, next) {
         next(new Forbidden('Нельзя удалить эту карточку'));
         return;
       }
+      card.remove();
       res
         .status(200)
         .send({ data: card });

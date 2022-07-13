@@ -6,9 +6,7 @@ const ERROR_CODE_401 = 401;
 const ERROR_DUPLICATE = 11000;
 const RES_OK = 200;
 const RES_CREATED = 201;
-// eslint-disable-next-line max-len
-// const regExpAvatar = /^((http[s]?|ftp):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?$/;
-const regExpURL = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(?:www\.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w\-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[.!/\\\w]*))?)/;
+const regExpURL = /^http(s)?:\/\/(www\.)?([\w-]+\.)+(\w)+(\/[\w-._~:/?#[\]@!$&'()*+,;=]+)?#?$/;
 
 module.exports = {
   ERROR_CODE_400,
