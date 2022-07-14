@@ -2,7 +2,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const {
-  RES_CREATED,
   RES_OK,
   ERROR_DUPLICATE,
 } = require('../constants/constants');
@@ -11,21 +10,21 @@ const SALT_ROUNDS = 10;
 const { generateToken } = require('../helpers/jwt');
 const Badreq = require('../errors/Error400');
 const InternalServer = require('../errors/Error500');
-const Forbidden = require('../errors/Error403');
+const Unauthorized = require('../errors/Error401');
 const NotFound = require('../errors/Error404');
+const Conflict = require('../errors/Error409');
 
 function getUserProfile(req, res, next) {
   User.findById(req.user.id)
     .then((user) => {
       res
-        .status(RES_CREATED)
+        .status(RES_OK)
         .send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new Badreq('Некорректные данные.'));
       } else {
-        // next(new InternalServer('Что-то пошло не так'));
         next(err);
       }
     });
@@ -40,26 +39,23 @@ function login(req, res, next) {
     .select('+password')
     .then((user) => {
       if (!user) {
-        next(new Forbidden('Неправильный емейл или пароль'));
+        throw new Badreq('Неправильный емейл или пароль');
       } else {
         return Promise.all([
           user,
           bcrypt.compare(password, user.password),
         ]);
       }
-      return '';
     })
     .then(([user, isPasswordCorrect]) => {
       if (!isPasswordCorrect) {
-        next(new Forbidden('Неправильный емейл или пароль'));
+        throw new Unauthorized('Не авторизован');
       } else {
-        return generateToken({ email: user.email, type: 'admin' });
+        const token = generateToken({ email: user.email, type: 'admin' });
+        res.send({ token });
       }
-      return '';
     })
-    .then((token) => {
-      res.send({ token });
-    });
+    .catch(next);
 }
 
 function createUser(req, res, next) {
@@ -70,33 +66,31 @@ function createUser(req, res, next) {
     email,
     password,
   } = req.body;
-  bcrypt
-    .hash(password, SALT_ROUNDS)
-    .then((hash) => User.create({
-      name,
-      about,
-      avatar,
-      email,
-      password: hash,
-    }))
+
+  User.findOne({ email })
+    .then((user) => {
+      if (!user) {
+        return bcrypt
+          .hash(password, SALT_ROUNDS)
+          .then((hash) => User.create({
+            name,
+            about,
+            avatar,
+            email,
+            password: hash,
+          }));
+      }
+      throw new Conflict(`${user.email} уже занят`);
+    })
     .then((user) => res.status(201).send({
       data: user,
     }))
     .catch((err) => {
       if (err.code === ERROR_DUPLICATE) {
-        next(new NotFound('Данный email уже занят'));
+        next(new Conflict('Данный email уже занят'));
       } else if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new Badreq('Некорректные данные'));
       } else {
-        // next(new InternalServer('Что-то пошло не так'));
-        next(err);
-      }
-    })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new Badreq('Некорректные данные'));
-      } else {
-        // next(new InternalServer('Что-то пошло не так'));
         next(err);
       }
     });
